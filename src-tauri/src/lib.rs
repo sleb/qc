@@ -1,7 +1,5 @@
-#[cfg(desktop)]
+mod shortcut;
 mod tray;
-
-mod error;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -13,8 +11,10 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![greet])
         .setup(|app| {
-            #[cfg(all(desktop))]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
             tray::create_tray(&app.handle())?;
+            shortcut::create_shortcut(&app.handle())?;
 
             Ok(())
         })
