@@ -15,6 +15,23 @@ const router = createBrowserRouter([
   },
 ]);
 
+import { createTheme } from "@mui/material/styles";
+
+export const theme = createTheme({
+  palette: {
+    mode: "light",
+    primary: {
+      main: "#0FA3B1",
+    },
+    secondary: {
+      main: "#E4572E",
+    },
+  },
+  typography: {
+    fontFamily: "Inter",
+  },
+});
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <RouterProvider router={router} />
