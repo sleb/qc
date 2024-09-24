@@ -5,43 +5,23 @@ import {
   ListItemButton,
   ListItemText,
 } from "@mui/material";
-import { webviewWindow } from "@tauri-apps/api";
-import { useState } from "react";
-import { HistoryItem } from "../model/HistoryItem";
+import { useAtom, useAtomValue } from "jotai";
+import { historyItemsState } from "../state/HistoryItemsState";
+import { selectedItemState } from "../state/SelectedItemState";
 
-type Props = {
-  historyItems: HistoryItem[];
-};
-
-const HistoryItemSelector = ({ historyItems }: Props) => {
-  const [selected, setSelected] = useState<number>(0);
-
-  const handleKey = (e: React.KeyboardEvent) => {
-    switch (e.code) {
-      case "Escape":
-        webviewWindow.getCurrentWebviewWindow().hide().catch(console.error);
-        break;
-      case "KeyJ":
-      case "Keyj":
-      case "ArrowDown":
-        setSelected(Math.min(historyItems.length - 1, selected + 1));
-        break;
-      case "KeyK":
-      case "Keyk":
-      case "ArrowUp":
-        setSelected(Math.max(0, selected - 1));
-        break;
-      default:
-        console.log(e);
-    }
-  };
+const HistoryItemSelector = () => {
+  const historyItems = useAtomValue(historyItemsState);
+  const [selectedItem, setSelectedItem] = useAtom(selectedItemState);
 
   return (
-    <Grid2 size={6} padding={1} onKeyDown={handleKey} tabIndex={0} autoFocus>
+    <Grid2 size={6} padding={1}>
       <List dense>
         {historyItems.map((item, i) => (
           <ListItem key={i} divider>
-            <ListItemButton selected={i === selected}>
+            <ListItemButton
+              selected={i === selectedItem}
+              onClick={() => setSelectedItem(i)}
+            >
               <ListItemText
                 primary={item.content}
                 primaryTypographyProps={{
