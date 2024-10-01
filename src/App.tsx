@@ -1,46 +1,38 @@
-import { Grid2, Typography } from "@mui/material";
+import { Grid2 } from "@mui/material";
 import { webviewWindow } from "@tauri-apps/api";
 import { invoke } from "@tauri-apps/api/core";
 import { useAtom, useSetAtom } from "jotai";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import HistoryItemSelector from "./components/HistoryItemSelector";
-import { HistoryItem } from "./model/HistoryItem";
 import { historyItemsState } from "./state/HistoryItemsState";
 import { selectedItemState } from "./state/SelectedItemState";
+import { listen } from "@tauri-apps/api/event";
+import HistoryItemPreview from "./components/HistoryItemPreview";
 
-const items: HistoryItem[] = [
-  {
-    id: "abc",
-    content:
-      "this is the song that never ends, yes it goes on and on my friends",
-  },
-  {
-    id: "bcd",
-    content: `const App = () => {
-  return (
-    <Box height="100%" onKeyDown={handleKey} tabIndex={0} autoFocus>
-      <List>
-        <ListItem>
-          <ListItemButton>
-            <ListItemText primary="this is the song...">
-          </ListItemButton>
-        </ListItem>
-      </List>
-    </Box>
-  );
-}`,
-  },
-];
-
-const hideWindow = () =>
-  webviewWindow.getCurrentWebviewWindow().hide().catch(console.error);
+const hideWindow = () => {
+  const window = webviewWindow.getCurrentWebviewWindow();
+  window.hide().catch(console.error);
+};
 
 const App = () => {
   const setHistoryItems = useSetAtom(historyItemsState);
   const [selectedItem, setSelectedItem] = useAtom(selectedItemState);
 
+  const grid = useRef<HTMLDivElement>(null);
+
+  const refreshHistory = () => {
+    invoke<string[]>("history", {})
+      .then((items) => setHistoryItems(items))
+      .catch(console.error);
+  };
+
   useEffect(() => {
-    setHistoryItems(items);
+    refreshHistory();
+    const unsubPromise = listen("history-updated", refreshHistory);
+    grid.current?.focus();
+    return () => {
+      unsubPromise.then((unsub) => unsub()).catch(console.error);
+    };
   }, []);
 
   const handleKey = (e: React.KeyboardEvent) => {
@@ -62,6 +54,12 @@ const App = () => {
         invoke("paste", { item: selectedItem }).catch(console.error);
         hideWindow();
         break;
+      case "Keyd":
+      case "KeyD":
+      case "Backspace":
+      case "Delete":
+        invoke("delete", { item: selectedItem }).catch(console.error);
+        break;
       default:
         console.log(e);
     }
@@ -71,15 +69,17 @@ const App = () => {
     <Grid2
       padding={2}
       spacing={2}
+      tabIndex={0}
+      onKeyDown={handleKey}
+      ref={grid}
       height="100%"
       container
-      tabIndex={0}
-      autoFocus
-      onKeyDown={handleKey}
     >
-      <HistoryItemSelector />
-      <Grid2 size={6}>
-        <Typography variant="h1">Some content</Typography>
+      <Grid2 size={6} height="100%" overflow="auto">
+        <HistoryItemSelector />
+      </Grid2>
+      <Grid2 size={6} height="100%" overflow="auto">
+        <HistoryItemPreview />
       </Grid2>
     </Grid2>
   );

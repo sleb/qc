@@ -1,10 +1,4 @@
-import {
-  Grid2,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-} from "@mui/material";
+import { List, ListItem, ListItemButton, ListItemText } from "@mui/material";
 import { useAtom, useAtomValue } from "jotai";
 import { historyItemsState } from "../state/HistoryItemsState";
 import { selectedItemState } from "../state/SelectedItemState";
@@ -14,16 +8,18 @@ const HistoryItemSelector = () => {
   const [selectedItem, setSelectedItem] = useAtom(selectedItemState);
 
   return (
-    <Grid2 size={6} padding={1}>
-      <List dense>
-        {historyItems.map((item, i) => (
+    <List dense>
+      {historyItems.map((item, i) => {
+        const selected = selectedItem == i;
+        return (
           <ListItem key={i} divider>
             <ListItemButton
-              selected={i === selectedItem}
+              selected={selected}
+              autoFocus={selected}
               onClick={() => setSelectedItem(i)}
             >
               <ListItemText
-                primary={item.content}
+                primary={item}
                 primaryTypographyProps={{
                   textOverflow: "ellipsis",
                   overflow: "hidden",
@@ -32,9 +28,9 @@ const HistoryItemSelector = () => {
               />
             </ListItemButton>
           </ListItem>
-        ))}
-      </List>
-    </Grid2>
+        );
+      })}
+    </List>
   );
 };
 

@@ -1,29 +1,30 @@
-use log::debug;
-use tauri::Runtime;
+use std::sync::Mutex;
 
+use history::ClipboardHistory;
+use tauri::Manager;
+
+mod delete;
+mod history;
+mod paste;
 mod shortcut;
 mod tray;
-
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-#[tauri::command]
-async fn paste<R: Runtime>(_app: tauri::AppHandle<R>, item: usize) -> Result<(), String> {
-    debug!("paste item: `{item}`");
-    Ok(())
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet, paste])
+        .invoke_handler(tauri::generate_handler![
+            paste::paste,
+            history::history,
+            delete::delete,
+        ])
         .setup(|app| {
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             tray::create_tray(&app.handle())?;
             shortcut::create_shortcut(&app.handle())?;
+
+            app.manage(Mutex::new(ClipboardHistory::default()));
+            history::start_clipboard_monitor(app.handle());
 
             Ok(())
         })
